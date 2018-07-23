@@ -17,6 +17,7 @@
 #--- Usage:
 #----       Run the zoning on the PrecisionEdge application
 #----       Rename the shapefiles for the pattern you are working (e. g. 'BRA_SUGARCANE_RAIZEN_FARM1_T01_2018JUL16.shp')
+#----       Check "Dropbox (Farmers Edge)/Brazil Project/METAFILE/metadata_zoning_shp.xlsx" for METADATA instructions
 #----       Place all the zoning shapefiles in the same directory (e.g. 'C:/FarmersEdge/Zoning')
 #----       Setup how the sampling points algorithm will be performed by changing the below variables:
 #----           wd_z:               Working directory where all zonning shapefiles are placed (WARNING: only place zoning shapefiles and all shapes MUST the have the ZoneID)
