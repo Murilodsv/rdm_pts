@@ -25,6 +25,7 @@
 #----           red_t:              Is the zone area reduction threshold [0-1] (e.g. red_t = 0.75: if the init_buf reduce the original zone area to more than 25%, a lower distance is used)
 #----           min_buf:            Is the minimum distance from zone area border [meters] after the reduction due to red_t
 #----           n_points_zone:      Fixed number of points that will be randomly placed in each zone
+#----           pdist_red:              Final reduction on distance among points [0-1]
 #----           p_min_dist:         Minimum distance among points [meters] (If the zone area is too small, the number of points will reduced to fit the p_min_dist)
 #----           T_ID:               Is the number index of where the field name is in the shapefile name (e.g. for file 'BRA_SUGARCANE_RAIZEN_FARM1_T01_2018JUL16.shp' the T_ID = 5)
 #----           utm_code:           Is the UTM projection code in QGIS (e.g. 'EPSG:32722' = UTM_22_S; 'EPSG:4326' = WGS84)
@@ -38,7 +39,7 @@
 #--- RANDOM POINTS SETUP
 
 #--- Working directories:
-wd_z                = "C:/Users/PC-600/Dropbox (Farmers Edge)/Brazil Project/115 Usina Batatais/Faz Santa Marta/Zones/SHPgdfg"			#All zoning shapefiles dir
+wd_z                = "C:/Murilo/GIS/Zoning/batatais"			#All zoning shapefiles dir
 wd_p                = "C:/Murilo/GIS/Zoning/Sampling Points"			#Sampling points directory
 
 #--- Parameters:
@@ -46,6 +47,7 @@ init_buf            = 10                    #[METERS]
 red_t               = 0.75                  #[0-1]
 min_buf             = 0.5                   #[METERS]
 n_points_zone       = 15                    #[#]
+pdist_red               = 0.5                   #[0-1]
 p_min_dist          = 10                    #[METERS]
 T_ID                = 5                     #[#]
 utm_code            = 'EPSG:32722'          #[Projection Code]
@@ -432,7 +434,7 @@ for shp in range(0,len(input_zon)):
             buf_area = sum(buf_area)
             bufdif_area = max(0, z_area - buf_area)
             
-            print('Area reduced to more than ' +round((1.-red_threshold)*100,1)+ '% of original Zone Area ')
+            print('Area reduced to more than ' +str(round((1.-red_threshold)*100,1))+ '% of original Zone Area ')
             print('Distance Buffer Reduced to:'+str(round(distbuf,2))+' meters')
             print('New Reduced area is: '+str(round(bufdif_area,2))+' Acres')
             print('Target is:'+str(round(z_area * red_threshold,2))+' Acres')
@@ -554,6 +556,40 @@ for shp in range(0,len(input_zon)):
             #else:
                 #implemented variable number of points per layer (points density npoints/acres)
         
+        #Reduce the points distance to better distribute on polygon area
+        pdist = max(pdist * pdist_red,p_min_dist)
+        r_points_z = QgsVectorLayer(processing.runalg("qgis:randompointsinsidepolygonsfixed",
+        buf_dif_diss,
+        0,
+        npoints,
+        pdist,
+        None)['OUTPUT'], ('rpoints'+str(zn)+'_try'+str(rp_try)+'_dist_'+str(pdist)+filename[shp]),"ogr")
+        npoints_zn   = []
+        for feature in r_points_z.getFeatures():
+            npoints_zn.append(feature["id"])
+        npoints_zn = len(npoints_zn)
+        print('Final points distance is: '+str(round(pdist,1))+' meters')
+        
+        rp_try = 0
+        rp_try_red = 5
+        while(npoints_zn < npoints):
+            if rp_try > rp_try_red:
+                print('Number of points was reduced to: '+str(npoints_zn))
+                break
+            print('Trying to fit points with final distance: '+str(round(pdist,1))+' meters')
+            print('Attempt '+str(rp_try)+'/'+str(rp_try_red))
+            r_points_z = QgsVectorLayer(processing.runalg("qgis:randompointsinsidepolygonsfixed",
+            buf_dif_diss,
+            0,
+            npoints,
+            pdist,
+            None)['OUTPUT'], ('rpoints'+str(zn)+'_try'+str(rp_try)+'_dist_'+str(pdist)+filename[shp]),"ogr")
+            npoints_zn   = []
+            for feature in r_points_z.getFeatures():
+                npoints_zn.append(feature["id"])
+            npoints_zn = len(npoints_zn)
+            rp_try = rp_try + 1
+        
         #--- reproject points back to WGS84 
         r_points_z_WGS84 = QgsVectorLayer(processing.runalg("qgis:reprojectlayer",
         r_points_z,###################################################WARNING
@@ -620,5 +656,5 @@ for shp in range(0,len(input_zon)):
     #--- Write Random points as filename_PTS
     _writer = QgsVectorFileWriter.writeAsVectorFormat(r_points,wd_p+'/'+r_points.name(),"utf-8",None,"ESRI Shapefile")
     print('Random Points for '+filename[shp]+' is completed')
-
+print('Random Points for all shapefiles are completed')
 #-------------------------------------------------------------
