@@ -17,7 +17,6 @@
 #--- Usage:
 #----       Run the zoning on the PrecisionEdge application
 #----       Rename the shapefiles for the pattern you are working (e. g. 'BRA_SUGARCANE_RAIZEN_FARM1_T01_2018JUL16.shp')
-#----       Check "Dropbox (Farmers Edge)/Brazil Project/METAFILE/metadata_zoning_shp.xlsx" for METADATA instructions
 #----       Place all the zoning shapefiles in the same directory (e.g. 'C:/FarmersEdge/Zoning')
 #----       Setup how the sampling points algorithm will be performed by changing the below variables:
 #----           wd_z:               Working directory where all zonning shapefiles are placed (WARNING: only place zoning shapefiles and all shapes MUST the have the ZoneID)
@@ -26,7 +25,7 @@
 #----           red_t:              Is the zone area reduction threshold [0-1] (e.g. red_t = 0.75: if the init_buf reduce the original zone area to more than 25%, a lower distance is used)
 #----           min_buf:            Is the minimum distance from zone area border [meters] after the reduction due to red_t
 #----           n_points_zone:      Fixed number of points that will be randomly placed in each zone
-#----           pdist_red:          Final reduction on distance among points [0-1]
+#----           pdist_red:              Final reduction on distance among points [0-1]
 #----           p_min_dist:         Minimum distance among points [meters] (If the zone area is too small, the number of points will reduced to fit the p_min_dist)
 #----           T_ID:               Is the number index of where the field name is in the shapefile name (e.g. for file 'BRA_SUGARCANE_RAIZEN_FARM1_T01_2018JUL16.shp' the T_ID = 5)
 #----           utm_code:           Is the UTM projection code in QGIS (e.g. 'EPSG:32722' = UTM_22_S; 'EPSG:4326' = WGS84)
@@ -48,7 +47,7 @@ init_buf            = 10                    #[METERS]
 red_t               = 0.75                  #[0-1]
 min_buf             = 0.5                   #[METERS]
 n_points_zone       = 15                    #[#]
-pdist_red           = 0.5                   #[0-1]
+pdist_red               = 0.75                   #[0-1]
 p_min_dist          = 10                    #[METERS]
 T_ID                = 5                     #[#]
 utm_code            = 'EPSG:32722'          #[Projection Code]
@@ -655,7 +654,8 @@ for shp in range(0,len(input_zon)):
             None)['OUTPUT'], filename[shp].replace('.shp','')+'_PTS'+'.shp',"ogr")
     
     #--- Write Random points as filename_PTS
-    _writer = QgsVectorFileWriter.writeAsVectorFormat(r_points,wd_p+'/'+r_points.name(),"utf-8",None,"ESRI Shapefile")
+    pts_nm = filename[shp].replace('.shp','')+'_PTS'+'.shp'
+    _writer = QgsVectorFileWriter.writeAsVectorFormat(r_points,wd_p+'/'+pts_nm,"utf-8",None,"ESRI Shapefile")
     print('Random Points for '+filename[shp]+' is completed')
 print('Random Points for all shapefiles are completed')
 #-------------------------------------------------------------
